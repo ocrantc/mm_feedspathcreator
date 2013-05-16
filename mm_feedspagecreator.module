@@ -1,0 +1,121 @@
+<?php
+
+/**
+ * @file
+ * Create monster menu pages and populate with node
+ *
+ * Overview:
+ * Add special target
+ * Create the MM path in the callback
+ * Get the mmtid of last page in path
+ * Add mmtid to catlist
+ * NOTE: Path must begin with "Home/" in order to be valid!
+ *
+ */
+module_load_include('inc', 'monster_menus', 'mm_create_path');
+
+/**
+ * Implements hook_feeds_processor_targets_alter(&$targets, $entity_type, $bundle_name)
+ */
+function mm_feedspagecreator_feeds_processor_targets_alter(&$targets, $entity_type, $bundle_name) {
+  if ($entity_type == 'node') {
+    $targets['mm_catlist'] = array(
+      'name' => t('Create MM Path'),
+      'description' => t('Target for mmtid.'),
+      'callback' => 'mm_feedspagecreator_feeds_set_target',
+    );
+  }
+}
+/**
+ * Implements hook_feeds_set_target($source, $entity, $target, $value, $mapping)
+ */
+function mm_feedspagecreator_feeds_set_target($source, $entity, $target, $value, $mapping) {
+
+  if (empty($value)) {
+    $value = '';
+    drupal_set_message(t('No path specified, therefore node will not be inserted into MM page'), 'status', FALSE);
+    exit;
+  }
+
+  //drupal_set_message($entity->mm_path, 'status', FALSE);
+  $mm_path = $value;
+
+  //Make sure path starts with Home
+  if (!preg_match('/^Home\//', $mm_path)) {
+     drupal_set_message(t('Invalid mm_path'), 'status', FALSE);
+     exit;
+  }
+
+  $mm_path = str_replace(" ", "_", $mm_path);
+
+  drupal_set_message($mm_path, 'status', FALSE);
+
+  //prepare each portion of path for creation
+  $arrpath = explode("/", $mm_path);
+  $path = array();
+
+  foreach ($arrpath as $k => $v) {
+    $properties = array(
+      "alias" => strtolower($v),
+      "name" => str_replace("_", " ", $v),
+      "no_update" => array(
+        "alias",
+        "comment",
+        "default_mode",
+        "flags",
+        "hidden",
+        "hover",
+        "max_depth",
+        "max_parents",
+        "menu_start",
+        "mmtid",
+        "name",
+        "node_info",
+        "perms",
+        "previews",
+        "reset",
+        "rss",
+        "theme",
+        "type",
+        "uid",
+        "weight",
+      ),
+    );
+    if ($k == 0) {
+      $properties["mmtid"] = 7;
+    }
+    $path[$k] = new MMCreatePathCat($properties);
+  }
+
+  //create pages in path
+  mm_create_path($path);
+
+  //Make path into alias we can use to find mmtid
+  $alias = preg_replace('/^Home\//', '', $mm_path, 1);
+
+  //get mmtid
+  $mmtid = mm_feedspagecreator_get_mmtid($alias);
+
+  $add_catlist = array();
+  $add_catlist[$mmtid] = end($arrpath);
+
+  //set catlist
+  $entity->mm_catlist = $add_catlist;
+
+}
+
+/**
+ * Return mmtid for path
+ */
+function mm_feedspagecreator_get_mmtid($path) {
+
+  $dpath = drupal_get_normal_path($path);
+  if (preg_match('/^mm\/([0-9]+)$/', $dpath)) {
+    return preg_replace('/^mm\//', '', $dpath, 1);
+  }
+  else {
+    drupal_set_message(t('Could not find mmtid'), 'status', FALSE);
+    return FALSE;
+  }
+
+}

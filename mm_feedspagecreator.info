@@ -1,0 +1,8 @@
+name = MM Feeds Page Creator
+description = When importing nodes via feeds, create Monster Menu pages and populate with node
+core = 7.x
+package = Monster Menus Custom Dev
+version = "7.x-1.0"
+dependencies[] = monster_menus
+dependencies[] = feeds
+dependencies[] = feeds_tamper
