@@ -34,69 +34,68 @@ function mm_feedspagecreator_feeds_set_target($source, $entity, $target, $value,
 
   if (empty($value)) {
     $value = '';
-    drupal_set_message(t('No path specified, therefore node will not be inserted into MM page'), 'status', FALSE);
-    exit();
+    drupal_set_message(t('mm_feedspagecreator: No path specified, therefore node will not be inserted into MM page'), 'status', FALSE);
   }
-
-  $mm_path = $value;
-
-  //Make sure path starts with Home
-  if (!preg_match('/^Home\//', $mm_path)) {
-     drupal_set_message(t('Invalid mm_path'), 'status', FALSE);
-     exit();
-  }
-  $mm_path = str_replace(' ', '_', preg_replace('/\/$/', '', $mm_path));
-
-  //prepare each portion of path for creation
-  $arrpath = explode('/', $mm_path);
-  $path = array();
-  foreach ($arrpath as $k => $v) {
-    $properties = array(
-      'alias' => strtolower($v),
-      'name' => str_replace('_', ' ', $v),
-      'no_update' => array(
-        'alias',
-        'comment',
-        'default_mode',
-        'flags',
-        'hidden',
-        'hover',
-        'max_depth',
-        'max_parents',
-        'menu_start',
-        'mmtid',
-        'name',
-        'node_info',
-        'perms',
-        'previews',
-        'reset',
-        'rss',
-        'theme',
-        'type',
-        'uid',
-        'weight',
-      ),
-    );
-    if ($k == 0) {
-      $properties['mmtid'] = 7;
+  else {
+    $mm_path = $value;
+    //Make sure path starts with Home
+    if (!preg_match('/^Home\//', $mm_path)) {
+       drupal_set_message(t('mm_feedspagecreator: @mm_path is an invalid path', array('@mm_path' => $mm_path)), 'status', FALSE);
     }
-    $path[$k] = new MMCreatePathCat($properties);
+    else {
+      $mm_path = str_replace(' ', '_', preg_replace('/\/$/', '', $mm_path));
+
+      //prepare each portion of path for creation
+      $arrpath = explode('/', $mm_path);
+      $path = array();
+      foreach ($arrpath as $k => $v) {
+        $properties = array(
+          'alias' => strtolower($v),
+          'name' => str_replace('_', ' ', $v),
+          'no_update' => array(
+            'alias',
+            'comment',
+            'default_mode',
+            'flags',
+            'hidden',
+            'hover',
+            'max_depth',
+            'max_parents',
+            'menu_start',
+            'mmtid',
+            'name',
+            'node_info',
+            'perms',
+            'previews',
+            'reset',
+            'rss',
+            'theme',
+            'type',
+            'uid',
+            'weight',
+          ),
+        );
+        if ($k == 0) {
+          $properties['mmtid'] = 7;
+        }
+        $path[$k] = new MMCreatePathCat($properties);
+      }
+
+    //create pages in path
+    mm_create_path($path);
+
+    //Make path into alias we can use to find mmtid
+    $alias = preg_replace('/^Home\//', '', $mm_path, 1);
+
+    //get mmtid
+    $mmtid = mm_feedspagecreator_get_mmtid($alias);
+
+    //set catlist
+    $add_catlist = array();
+    $add_catlist[$mmtid] = end($arrpath);
+    $entity->mm_catlist = $add_catlist;
+    }
   }
-
-  //create pages in path
-  mm_create_path($path);
-
-  //Make path into alias we can use to find mmtid
-  $alias = preg_replace('/^Home\//', '', $mm_path, 1);
-
-  //get mmtid
-  $mmtid = mm_feedspagecreator_get_mmtid($alias);
-
-  $add_catlist = array();
-  $add_catlist[$mmtid] = end($arrpath);
-
-  //set catlist
-  $entity->mm_catlist = $add_catlist;
 
 }
 
@@ -110,7 +109,7 @@ function mm_feedspagecreator_get_mmtid($path) {
     return preg_replace('/^mm\//', '', $dpath, 1);
   }
   else {
-    drupal_set_message(t('Could not find mmtid'), 'status', FALSE);
+    drupal_set_message(t('mm_feedspagecreator: Could not find mmtid for @path', array('@path' => $path)), 'status', FALSE);
     return FALSE;
   }
 
