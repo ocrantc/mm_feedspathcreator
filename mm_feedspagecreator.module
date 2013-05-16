@@ -9,7 +9,7 @@
  * Create the MM path in the callback
  * Get the mmtid of last page in path
  * Add mmtid to catlist
- * NOTE: Path must begin with "Home/" in order to be valid!
+ * NOTE: Path must begin with 'Home/' in order to be valid!
  *
  */
 module_load_include('inc', 'monster_menus', 'mm_create_path');
@@ -26,6 +26,7 @@ function mm_feedspagecreator_feeds_processor_targets_alter(&$targets, $entity_ty
     );
   }
 }
+
 /**
  * Implements hook_feeds_set_target($source, $entity, $target, $value, $mapping)
  */
@@ -34,55 +35,50 @@ function mm_feedspagecreator_feeds_set_target($source, $entity, $target, $value,
   if (empty($value)) {
     $value = '';
     drupal_set_message(t('No path specified, therefore node will not be inserted into MM page'), 'status', FALSE);
-    exit;
+    exit();
   }
 
-  //drupal_set_message($entity->mm_path, 'status', FALSE);
   $mm_path = $value;
 
   //Make sure path starts with Home
   if (!preg_match('/^Home\//', $mm_path)) {
      drupal_set_message(t('Invalid mm_path'), 'status', FALSE);
-     exit;
+     exit();
   }
-
-  $mm_path = str_replace(" ", "_", $mm_path);
-
-  drupal_set_message($mm_path, 'status', FALSE);
+  $mm_path = str_replace(' ', '_', preg_replace('/\/$/', '', $mm_path));
 
   //prepare each portion of path for creation
-  $arrpath = explode("/", $mm_path);
+  $arrpath = explode('/', $mm_path);
   $path = array();
-
   foreach ($arrpath as $k => $v) {
     $properties = array(
-      "alias" => strtolower($v),
-      "name" => str_replace("_", " ", $v),
-      "no_update" => array(
-        "alias",
-        "comment",
-        "default_mode",
-        "flags",
-        "hidden",
-        "hover",
-        "max_depth",
-        "max_parents",
-        "menu_start",
-        "mmtid",
-        "name",
-        "node_info",
-        "perms",
-        "previews",
-        "reset",
-        "rss",
-        "theme",
-        "type",
-        "uid",
-        "weight",
+      'alias' => strtolower($v),
+      'name' => str_replace('_', ' ', $v),
+      'no_update' => array(
+        'alias',
+        'comment',
+        'default_mode',
+        'flags',
+        'hidden',
+        'hover',
+        'max_depth',
+        'max_parents',
+        'menu_start',
+        'mmtid',
+        'name',
+        'node_info',
+        'perms',
+        'previews',
+        'reset',
+        'rss',
+        'theme',
+        'type',
+        'uid',
+        'weight',
       ),
     );
     if ($k == 0) {
-      $properties["mmtid"] = 7;
+      $properties['mmtid'] = 7;
     }
     $path[$k] = new MMCreatePathCat($properties);
   }
